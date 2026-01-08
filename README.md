@@ -240,36 +240,7 @@ The lab is accessed remotely via a **split-tunnel WireGuard VPN**, allowing secu
 
 ## Architecture Diagram (High-Level)
 
-```mermaid
-flowchart TB
 
-Corp[Corporate Network]
-FWCorp[FortiGate
-(Corporate Perimeter)]
-Laptop[Analyst Laptop
-WireGuard Client]
-
-Corp --> FWCorp --> Laptop
-
-Laptop -->|Encrypted UDP 51820| WG[WireGuard Server
-10.200.0.1]
-
-WG --> FGHome[FortiGate VM
-Home Network Core]
-
-FGHome --> LAN[Home SOC LAN
-10.10.0.0/24]
-
-LAN --> PiHole[Pi-hole
-10.10.0.53]
-LAN --> Wazuh[Wazuh SIEM]
-LAN --> Graylog[Graylog]
-LAN --> MISP[MISP]
-LAN --> DFIR[DFIR-IRIS]
-LAN --> Endpoints[Windows & Linux Endpoints]
-
-PiHole --> DNSUpstream[Upstream DNS
-Cloudflare / Quad9]
 ```
         [ Corporate Network ]
                  |
