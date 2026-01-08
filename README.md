@@ -74,6 +74,7 @@ Remote access is achieved via a hardened, split-tunnel VPN.
 | Graylog | Ubuntu Server 20.04 | 2 CPU / 4 GB | Centralized Log Management |
 | WireGuard | Ubuntu Server 24.04 | 2 CPU / 2 GB | Secure Remote Access Gateway |
 | **Pi-hole** | **Ubuntu Server 22.04** | **1 CPU / 1–2 GB** | **Private DNS, Ad & Malicious Domain Blocking** |
+| **FortiGate Firewall** | **FortiOS 7.0.15 (Eval)** | **2 CPU / 2 GB** | **Network Core: DHCP, NAC, Port Forwarding, Traffic Control** |
 
 ----|----|----------|------|
 | MISP | Ubuntu Server 22.04 | 2 CPU / 4 GB | Threat Intelligence Platform (Docker) |
@@ -90,6 +91,8 @@ Remote access is achieved via a hardened, split-tunnel VPN.
 
 ### 5.1 Internal LAN
 - Subnet: **10.10.0.0/24**
+- Network gateway: **FortiGate VM**
+- DHCP & basic NAC enforced by FortiGate
 - All SOC VMs reside on this network
 - **Pi-hole DNS IP**: `10.10.0.53`
 
@@ -107,7 +110,23 @@ Remote access is achieved via a hardened, split-tunnel VPN.
 
 ---
 
-## 6. VPN Design & Security Decisions
+## 6. Network Security & Firewalling
+
+### 6.1 FortiGate Role
+
+A FortiGate VM (FortiOS 7.0.15 – evaluation license) acts as the **network core** for the Home SOC LAN.
+
+**Responsibilities:**
+- Default gateway for `10.10.0.0/24`
+- DHCP server for SOC VMs
+- Port forwarding toward internal services (where required)
+- Network access control and basic traffic segmentation
+
+The evaluation license limitations are acknowledged and accepted for lab purposes.
+
+---
+
+## 7. VPN Design & Security Decisions
 
 ### 6.1 Why WireGuard
 - Minimal attack surface
@@ -221,6 +240,36 @@ The lab is accessed remotely via a **split-tunnel WireGuard VPN**, allowing secu
 
 ## Architecture Diagram (High-Level)
 
+```mermaid
+flowchart TB
+
+Corp[Corporate Network]
+FWCorp[FortiGate
+(Corporate Perimeter)]
+Laptop[Analyst Laptop
+WireGuard Client]
+
+Corp --> FWCorp --> Laptop
+
+Laptop -->|Encrypted UDP 51820| WG[WireGuard Server
+10.200.0.1]
+
+WG --> FGHome[FortiGate VM
+Home Network Core]
+
+FGHome --> LAN[Home SOC LAN
+10.10.0.0/24]
+
+LAN --> PiHole[Pi-hole
+10.10.0.53]
+LAN --> Wazuh[Wazuh SIEM]
+LAN --> Graylog[Graylog]
+LAN --> MISP[MISP]
+LAN --> DFIR[DFIR-IRIS]
+LAN --> Endpoints[Windows & Linux Endpoints]
+
+PiHole --> DNSUpstream[Upstream DNS
+Cloudflare / Quad9]
 ```
         [ Corporate Network ]
                  |
